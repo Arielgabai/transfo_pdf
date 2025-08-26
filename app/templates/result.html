@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PDF transformé</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Votre PDF est prêt</h1>
+      <p>Le document a été transformé en format paysage 20cm × 10cm.</p>
+
+      <div class="actions">
+        <a class="link-btn primary" href="{{ url_for('main.download_file', filename=filename) }}">Télécharger le fichier</a>
+        <a class="link-btn" href="{{ url_for('main.upload_and_transform') }}">Transformer un nouveau fichier</a>
+      </div>
+    </main>
+  </body>
+  </html>
+
+

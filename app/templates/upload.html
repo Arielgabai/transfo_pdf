@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Transformer PDF (Paysage 20cm × 10cm)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Transformer un PDF</h1>
+
+      {% with messages = get_flashed_messages() %}
+      {% if messages %}
+      <div class="flash">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      <form id="upload-form" action="{{ url_for('main.upload_and_transform') }}" method="post" enctype="multipart/form-data">
+        <div id="dropzone" class="dropzone">
+          <p>Glissez-déposez votre PDF ici ou cliquez pour choisir.</p>
+          <input id="file" type="file" name="file" accept="application/pdf,.pdf" />
+        </div>
+        <div class="file-info">
+          <span id="file-name">Aucun fichier sélectionné</span>
+        </div>
+        <button id="submit-btn" class="btn" type="submit" disabled>Appliquer la transformation</button>
+      </form>
+    </main>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+  </html>
+
+
