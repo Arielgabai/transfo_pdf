@@ -31,7 +31,7 @@ def cm_to_pt(width_cm: float, height_cm: float) -> Tuple[float, float]:
 
 
 # Page and content box configuration (in cm)
-PAGE_WIDTH_CM = 12.0
+PAGE_WIDTH_CM = 29.7
 PAGE_HEIGHT_CM = 21.0
 IMAGE_BOX_WIDTH_CM = 11.0
 IMAGE_BOX_HEIGHT_CM = 19.0
