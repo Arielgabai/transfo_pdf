@@ -75,7 +75,13 @@ def transform_pdf(input_path: str, output_path: str) -> None:
         crop_rect = RectangleObject((llx, lly, urx, ury))
 
         # Crop to the specified region and scale to fit inside the image box
-        cropped_page = original_page.within_box(crop_rect)
+        try:
+            cropped_page = original_page.within_box(crop_rect)
+        except AttributeError as exc:
+            raise RuntimeError(
+                "La version de pypdf installée ne supporte pas within_box. "
+                "Veuillez mettre à jour pypdf (par ex. pypdf>=4.0)."
+            ) from exc
 
         target_page = writer.add_blank_page(width=PAGE_WIDTH_PT, height=PAGE_HEIGHT_PT)
 
