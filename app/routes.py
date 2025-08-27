@@ -74,14 +74,22 @@ def transform_pdf(input_path: str, output_path: str) -> None:
 
         crop_rect = RectangleObject((llx, lly, urx, ury))
 
-        # Crop to the specified region and scale to fit inside the image box
+        # Crop to the specified region (compat mode for older pypdf without within_box)
         try:
-            cropped_page = original_page.within_box(crop_rect)
-        except AttributeError as exc:
-            raise RuntimeError(
-                "La version de pypdf installée ne supporte pas within_box. "
-                "Veuillez mettre à jour pypdf (par ex. pypdf>=4.0)."
-            ) from exc
+            cropped_page = original_page.within_box(crop_rect)  # pypdf >= 4
+        except AttributeError:
+            # Fallback: adjust mediabox/cropbox directly on a working copy
+            cropped_page = original_page
+            try:
+                cropped_page.cropbox = crop_rect  # type: ignore[attr-defined]
+            except Exception:
+                pass
+            try:
+                # Ensure the visible page is exactly the crop rect
+                cropped_page.mediabox = crop_rect
+            except Exception:
+                cropped_page.mediabox.lower_left = (llx, lly)
+                cropped_page.mediabox.upper_right = (urx, ury)
 
         target_page = writer.add_blank_page(width=PAGE_WIDTH_PT, height=PAGE_HEIGHT_PT)
 
@@ -90,14 +98,11 @@ def transform_pdf(input_path: str, output_path: str) -> None:
         scaled_w = crop_w_pt * s
         scaled_h = crop_h_pt * s
 
-        # Apply scaling to the cropped page
-        cropped_page.scale_to(scaled_w, scaled_h)
-
-        # Center within the 19×11 cm box with fixed margins
+        # Center within the 11×19 cm box with fixed margins
         offset_x = MARGIN_LEFT_PT + (IMAGE_BOX_WIDTH_PT - scaled_w) / 2.0
         offset_y = MARGIN_BOTTOM_PT + (IMAGE_BOX_HEIGHT_PT - scaled_h) / 2.0
 
-        transform = Transformation().translate(tx=offset_x, ty=offset_y)
+        transform = Transformation().scale(s).translate(tx=offset_x, ty=offset_y)
         target_page.merge_transformed_page(cropped_page, transform)
 
     with open(output_path, "wb") as f_out:
