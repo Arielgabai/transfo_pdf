@@ -30,7 +30,18 @@ def cm_to_pt(width_cm: float, height_cm: float) -> Tuple[float, float]:
     return width_cm * points_per_cm, height_cm * points_per_cm
 
 
-TARGET_WIDTH_PT, TARGET_HEIGHT_PT = cm_to_pt(20.0, 10.0)
+# Page and content box configuration (in cm)
+PAGE_WIDTH_CM = 12.0
+PAGE_HEIGHT_CM = 21.0
+IMAGE_BOX_WIDTH_CM = 11.0
+IMAGE_BOX_HEIGHT_CM = 19.0
+MARGIN_LEFT_CM = 1.0
+MARGIN_BOTTOM_CM = 1.0
+MARGIN_TOP_CM = 1.0
+
+PAGE_WIDTH_PT, PAGE_HEIGHT_PT = cm_to_pt(PAGE_WIDTH_CM, PAGE_HEIGHT_CM)
+IMAGE_BOX_WIDTH_PT, IMAGE_BOX_HEIGHT_PT = cm_to_pt(IMAGE_BOX_WIDTH_CM, IMAGE_BOX_HEIGHT_CM)
+MARGIN_LEFT_PT, MARGIN_BOTTOM_PT = cm_to_pt(MARGIN_LEFT_CM, MARGIN_BOTTOM_CM)
 
 
 def allowed_file(filename: str) -> bool:
@@ -42,19 +53,20 @@ def transform_pdf(input_path: str, output_path: str) -> None:
     writer = PdfWriter()
 
     for src_page in reader.pages:
-        target_page = writer.add_blank_page(width=TARGET_WIDTH_PT, height=TARGET_HEIGHT_PT)
+        # Create target page with required final size
+        target_page = writer.add_blank_page(width=PAGE_WIDTH_PT, height=PAGE_HEIGHT_PT)
 
         src_width = float(src_page.mediabox.width)
         src_height = float(src_page.mediabox.height)
 
-        # Compute proportional scale to fit within 20cm x 10cm
-        scale_factor = min(TARGET_WIDTH_PT / src_width, TARGET_HEIGHT_PT / src_height)
+        # Scale proportionally to fit inside the 11cm x 19cm box
+        scale_factor = min(IMAGE_BOX_WIDTH_PT / src_width, IMAGE_BOX_HEIGHT_PT / src_height)
         scaled_w = src_width * scale_factor
         scaled_h = src_height * scale_factor
 
-        # Center the content
-        offset_x = (TARGET_WIDTH_PT - scaled_w) / 2.0
-        offset_y = (TARGET_HEIGHT_PT - scaled_h) / 2.0
+        # Position within the box, centered; left and bottom margins fixed at 1cm
+        offset_x = MARGIN_LEFT_PT + (IMAGE_BOX_WIDTH_PT - scaled_w) / 2.0
+        offset_y = MARGIN_BOTTOM_PT + (IMAGE_BOX_HEIGHT_PT - scaled_h) / 2.0
 
         transform = Transformation().scale(scale_factor).translate(tx=offset_x, ty=offset_y)
         target_page.merge_transformed_page(src_page, transform)
