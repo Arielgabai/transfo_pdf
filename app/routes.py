@@ -17,6 +17,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 from pypdf import PdfReader, PdfWriter, Transformation
+from pypdf.generic import RectangleObject
 
 
 bp = Blueprint("main", __name__)
@@ -30,7 +31,9 @@ def cm_to_pt(width_cm: float, height_cm: float) -> Tuple[float, float]:
     return width_cm * points_per_cm, height_cm * points_per_cm
 
 
-# Page and content box configuration (in cm)
+# Target page and content box configuration (in cm)
+# Final page must be A4 paysage 29.7cm × 21cm with a content box 11cm × 19cm
+# and margins: 1cm top, 1cm bottom, 1cm left
 PAGE_WIDTH_CM = 29.7
 PAGE_HEIGHT_CM = 21.0
 IMAGE_BOX_WIDTH_CM = 11.0
@@ -52,24 +55,44 @@ def transform_pdf(input_path: str, output_path: str) -> None:
     reader = PdfReader(input_path)
     writer = PdfWriter()
 
-    for src_page in reader.pages:
-        # Create target page with required final size
+    # Source crop region on an A4 portrait page (21cm × 29.7cm):
+    # from top-left: 1cm right and 2cm down, size 11cm × 15cm
+    points_per_cm = 72.0 / 2.54
+    src_left_pt = 1.0 * points_per_cm
+    src_top_pt = 2.0 * points_per_cm
+    crop_w_pt = 11.0 * points_per_cm
+    crop_h_pt = 15.0 * points_per_cm
+
+    for original_page in reader.pages:
+        page_h = float(original_page.mediabox.height)
+
+        # Convert top-left based rectangle to PDF bottom-left coordinates
+        llx = src_left_pt
+        lly = page_h - (src_top_pt + crop_h_pt)
+        urx = llx + crop_w_pt
+        ury = page_h - src_top_pt
+
+        crop_rect = RectangleObject((llx, lly, urx, ury))
+
+        # Crop to the specified region and scale to fit inside the image box
+        cropped_page = original_page.within_box(crop_rect)
+
         target_page = writer.add_blank_page(width=PAGE_WIDTH_PT, height=PAGE_HEIGHT_PT)
 
-        src_width = float(src_page.mediabox.width)
-        src_height = float(src_page.mediabox.height)
+        # Compute proportional scale based on cropped size
+        s = min(IMAGE_BOX_WIDTH_PT / crop_w_pt, IMAGE_BOX_HEIGHT_PT / crop_h_pt)
+        scaled_w = crop_w_pt * s
+        scaled_h = crop_h_pt * s
 
-        # Scale proportionally to fit inside the 11cm x 19cm box
-        scale_factor = min(IMAGE_BOX_WIDTH_PT / src_width, IMAGE_BOX_HEIGHT_PT / src_height)
-        scaled_w = src_width * scale_factor
-        scaled_h = src_height * scale_factor
+        # Apply scaling to the cropped page
+        cropped_page.scale_to(scaled_w, scaled_h)
 
-        # Position within the box, centered; left and bottom margins fixed at 1cm
+        # Center within the 19×11 cm box with fixed margins
         offset_x = MARGIN_LEFT_PT + (IMAGE_BOX_WIDTH_PT - scaled_w) / 2.0
         offset_y = MARGIN_BOTTOM_PT + (IMAGE_BOX_HEIGHT_PT - scaled_h) / 2.0
 
-        transform = Transformation().scale(scale_factor).translate(tx=offset_x, ty=offset_y)
-        target_page.merge_transformed_page(src_page, transform)
+        transform = Transformation().translate(tx=offset_x, ty=offset_y)
+        target_page.merge_transformed_page(cropped_page, transform)
 
     with open(output_path, "wb") as f_out:
         writer.write(f_out)

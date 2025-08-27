@@ -9,7 +9,9 @@
   <body>
     <main class="container">
       <h1>Votre PDF est prêt</h1>
-      <p>Le document a été transformé en format paysage 20cm × 10cm.</p>
+      <p>Le document a été recadré (11cm × 15cm depuis 1cm à droite et 2cm sous le bord supérieur gauche)
+        puis placé au centre d'une page A4 paysage 29,7cm × 21cm, dans un cadre 11cm × 19cm
+        avec marges de 1cm en haut, en bas et à gauche.</p>
 
       <div class="actions">
         <a class="link-btn primary" href="{{ url_for('main.download_file', filename=filename) }}">Télécharger le fichier</a>
