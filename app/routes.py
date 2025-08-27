@@ -102,7 +102,21 @@ def transform_pdf(input_path: str, output_path: str) -> None:
         offset_x = MARGIN_LEFT_PT + (IMAGE_BOX_WIDTH_PT - scaled_w) / 2.0
         offset_y = MARGIN_BOTTOM_PT + (IMAGE_BOX_HEIGHT_PT - scaled_h) / 2.0
 
-        transform = Transformation().scale(s).translate(tx=offset_x, ty=offset_y)
+        # Normalize cropped content origin to (0, 0) before scaling and placing
+        try:
+            source_llx = float(cropped_page.mediabox.lower_left[0])  # type: ignore[index]
+            source_lly = float(cropped_page.mediabox.lower_left[1])  # type: ignore[index]
+        except Exception:
+            # Fallback to computed crop lower-left if mediabox access fails
+            source_llx = llx
+            source_lly = lly
+
+        transform = (
+            Transformation()
+            .translate(tx=-source_llx, ty=-source_lly)
+            .scale(s)
+            .translate(tx=offset_x, ty=offset_y)
+        )
         target_page.merge_transformed_page(cropped_page, transform)
 
     with open(output_path, "wb") as f_out:
