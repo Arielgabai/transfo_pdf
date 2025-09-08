@@ -33,12 +33,12 @@ def cm_to_pt(width_cm: float, height_cm: float) -> Tuple[float, float]:
 
 # Target page and content box configuration (in cm)
 # Final page must be A4 paysage 29.7cm × 21cm with a content box 11cm × 19cm
-# and margins: 1cm top, 1cm bottom, 1cm left
+# and margins: 1cm top, 1cm bottom, 0.6cm left
 PAGE_WIDTH_CM = 29.7
 PAGE_HEIGHT_CM = 21.0
 IMAGE_BOX_WIDTH_CM = 11.0
 IMAGE_BOX_HEIGHT_CM = 19.0
-MARGIN_LEFT_CM = 1.0
+MARGIN_LEFT_CM = 0.6
 MARGIN_BOTTOM_CM = 1.0
 MARGIN_TOP_CM = 1.0
 
